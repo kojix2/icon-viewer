@@ -29,11 +29,15 @@ class ViewerIcon
   end
 
   private def variant_for(name : String) : String
-    if @collection == "Octicons" && (match = name.match(/(\d+)\z/))
+    if @collection == "Octicons" && (match = name.match(/(12|16|24|48|96)\z/))
       match[1]
-    elsif @collection == "Ionic" && name.starts_with?("Logo") && (match = name.match(/(\d+)\z/))
+    elsif @collection == "Ionic" && name.starts_with?("Logo") && (match = name.match(/(24|32)\z/))
       "#{match[1]} Logos"
-    elsif match = name.match(/(\d+)(Regular|Filled|Light|Color|Outline|Sharp)\z/)
+    elsif @collection == "Fluent" && (match = name.match(/(10|12|16|20|24|28|32|48)(Regular|Filled|Light|Color)\z/))
+      "#{match[1]} #{match[2]}"
+    elsif @collection == "Eva" && (match = name.match(/(24)(Filled|Outline)\z/))
+      "#{match[1]} #{match[2]}"
+    elsif @collection == "Ionic" && (match = name.match(/(24|32)(Filled|Outline|Sharp)\z/))
       "#{match[1]} #{match[2]}"
     else
       ""

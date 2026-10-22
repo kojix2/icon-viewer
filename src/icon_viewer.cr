@@ -17,6 +17,8 @@ end
 
 class IconViewer
   PAGE_SIZE = 256
+  VERSION = "0.1.0"
+  PROJECT_URL = "https://github.com/kojix2/icon-viewer"
 
   @collections : Array(String)
   @variant_options : Array(String)
@@ -97,12 +99,10 @@ class IconViewer
     page_row.append(@page_label, true)
     page_row.append(@next_page, false)
 
-    @list_panel.append(UIng::Label.new("Icons"), false)
     @list_panel.append(@table, true)
     @list_panel.append(page_row, false)
 
     detail_panel = UIng::Box.new(:vertical, padded: true)
-    detail_panel.append(UIng::Label.new("Preview"), false)
     detail_panel.append(@preview, true)
     detail_panel.append(@selected_name, false)
     detail_panel.append(UIng::Label.new("Crystal constant"), false)
@@ -120,7 +120,7 @@ class IconViewer
   end
 
   private def make_toolbar : Nil
-    toolbar_images = %w[ChevronLeft ChevronRight Shuffle Cross2 QuestionMarkCircled].map do |name|
+    toolbar_images = %w[ChevronLeft ChevronRight Shuffle Cross2 InfoCircled].map do |name|
       icon = @icons.find { |candidate| candidate.collection == "Radix" && candidate.name == name } || raise "Missing toolbar icon: #{name}"
       icon.native
     end
@@ -150,10 +150,10 @@ class IconViewer
 
     toolbar.append_separator
 
-    help = toolbar.append_button("Help", toolbar_images[4])
-    help.tooltip = "About this application"
-    help.on_clicked do
-      @window.msg_box("Icon Viewer", "Choose a collection and type in the search field to filter.\nUse the toolbar or click a row to select an icon.\nThe constant name can be copied from the field below the preview.")
+    info = toolbar.append_button("Info", toolbar_images[4])
+    info.tooltip = "About Icon Viewer"
+    info.on_clicked do
+      @window.msg_box("About Icon Viewer", "Icon Viewer\nVersion #{VERSION}\n#{PROJECT_URL}")
     end
 
     # UIng copies item images and frees the attached toolbar with its window.
@@ -176,7 +176,7 @@ class IconViewer
     @window.on_closing do
       # Table destruction may be deferred until this native callback returns.
       # ViewerTable releases the borrowed images on actual destruction.
-      @list_panel.delete(1)
+      @list_panel.delete(0)
       @table.destroy
       @model.free
       UIng.quit

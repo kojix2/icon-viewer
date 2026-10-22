@@ -11,6 +11,11 @@ describe IconCatalog do
       {"Eva", "Heart24Outline", "24 Outline"},
       {"Ionic", "Heart24Sharp", "24 Sharp"},
       {"Ionic", "LogoGithub32", "32 Logos"},
+      {"Fluent", "GaugeRotate016Filled", "16 Filled"},
+      {"Fluent", "NumberCircle016Regular", "16 Regular"},
+      {"Fluent", "Fps3016Filled", "16 Filled"},
+      {"Ionic", "LogoCss324", "24 Logos"},
+      {"Ionic", "LogoHtml532", "32 Logos"},
     }.each do |collection, name, variant|
       icon = icons.find! { |entry| entry.collection == collection && entry.name == name }
       icon.variant.should eq(variant)
