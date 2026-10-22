@@ -12,11 +12,10 @@ describe IconCatalog do
       {"Ionic", "Heart24Sharp", "24 Sharp"},
       {"Ionic", "LogoGithub32", "32 Logos"},
     }.each do |collection, name, variant|
-      icon = icons.find { |entry| entry.collection == collection && entry.name == name }
-      icon.should_not be_nil
-      icon.not_nil!.variant.should eq(variant)
+      icon = icons.find! { |entry| entry.collection == collection && entry.name == name }
+      icon.variant.should eq(variant)
     end
-    lockup = icons.find { |entry| entry.collection == "Octicons" && entry.name == "LockupGithub16" }.not_nil!
+    lockup = icons.find! { |entry| entry.collection == "Octicons" && entry.name == "LockupGithub16" }
     lockup.width.should eq(68)
     lockup.height.should eq(16)
   end

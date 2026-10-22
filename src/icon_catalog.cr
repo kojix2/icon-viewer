@@ -49,8 +49,9 @@ class ViewerIcon
     unless bounds.width == @width && bounds.height == @height
       raise "#{@collection}::#{@name} decoded to #{bounds.width}x#{bounds.height}, expected #{@width}x#{@height}"
     end
-    @native = UIng::Image.from_crimage(source)
-    @native.not_nil!
+    native = UIng::Image.from_crimage(source)
+    @native = native
+    native
   end
 
   def cached_native : UIng::Image
