@@ -1,4 +1,4 @@
-name: radix-icon-viewer
+name: icon-viewer
 version: 0.1.0
 
 crystal: ">= 1.16.0"
@@ -8,11 +8,20 @@ license: MIT
 dependencies:
   uing:
     github: kojix2/uing
-  icon:
-    github: kojix2/icon
+    branch: main
+  icon-radix:
+    github: kojix2/icon-radix
+  icon-fluent:
+    github: kojix2/icon-fluent
+  icon-octicons:
+    github: kojix2/icon-octicons
+  icon-eva:
+    github: kojix2/icon-eva
+  icon-ionic:
+    github: kojix2/icon-ionic
   crimage:
     github: naqvis/crimage
 
 targets:
-  radix-icon-viewer:
-    main: src/radix_icon_viewer.cr
+  icon-viewer:
+    main: src/icon_viewer.cr

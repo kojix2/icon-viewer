@@ -1,17 +1,8 @@
-# Radix Icon Viewer
+# Icon Viewer
 
-A small, native Crystal GUI for browsing the 332 Radix icons via
-the bundled `icon` shard (from [icon-radix](https://github.com/kojix2/icon-radix)) and
-[UIng](https://github.com/kojix2/uing).
+A native Crystal GUI for browsing [Radix](https://github.com/kojix2/icon-radix), [Fluent](https://github.com/kojix2/icon-fluent), [Octicons](https://github.com/kojix2/icon-octicons), [Eva](https://github.com/kojix2/icon-eva), and [Ionicons](https://github.com/kojix2/icon-ionic), built with [UIng](https://github.com/kojix2/uing).
 
-## Features
-
-- A searchable table containing icon thumbnails and names.
-- A large preview and copyable `Icon::Radix::Name` constant field.
-- A **native** UIng toolbar, with Radix images for every toolbar action:
-  Previous, Next, Random, Clear, Compact, and Help.
-- Icon catalog generated at compile time from `Icon::Radix.constants`;
-  it stays in sync when new icons are added.
+Choose a collection and size/style variant, search by name, then preview an icon and copy its Crystal constant. Results are paged in groups of 256. Icon PNGs are decoded when displayed.
 
 ## Run
 
@@ -19,29 +10,16 @@ Install Crystal and the platform prerequisites for UIng, then:
 
 ```sh
 shards install
-crystal run src/radix_icon_viewer.cr
+shards build
+./bin/icon-viewer
 ```
 
-For a release build:
+The UIng shard downloads a libui-ng binary during installation.
 
-```sh
-shards build --release
-./bin/radix-icon-viewer
-```
+## Adding a collection
 
-The UIng shard downloads an appropriate libui-ng binary at installation time.
-The `icon` shard is included in `vendor/icon` so `require "icon/radix"` works
-before the renamed shard is published. If you work offline, supply the UIng
-binary and install the remaining dependencies in `lib/`.
-
-## Implementation notes
-
-The source icons are shared `CrImage` constants and are converted once to
-owned `UIng::Image` objects. The Table and Toolbar borrow those images;
-ImageView copies its selected image. On closing, the Toolbar and Table are
-released before their shared images, and the Table is destroyed before its
-model is freed.
+Add its shard to `shard.yml` and register it in `src/icon_catalog.cr`. `scripts/png_catalog.cr` reads each shard's `src/data/*.tsv` at compile time; the collection and variant selectors update automatically.
 
 ## License
 
-Example application code: MIT. Dependencies retain their own licenses.
+Application code: MIT. Icon shards retain their own licenses.
