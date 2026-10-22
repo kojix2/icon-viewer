@@ -18,7 +18,7 @@ The UIng shard downloads a libui-ng binary during installation.
 
 ## Adding a collection
 
-Add its shard to `shard.yml` and list its TSV groups in `src/icon_catalog.cr`. The collection and variant selectors update automatically.
+Add its shard to `shard.yml` and call its compile-time catalog macro in `src/icon_catalog.cr`. The collection and variant selectors update automatically.
 
 ## License
 

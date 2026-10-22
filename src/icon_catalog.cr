@@ -1,5 +1,10 @@
 require "uing/crimage"
 require "base64"
+require "icon-radix/common"
+require "icon-fluent/common"
+require "icon-octicons/common"
+require "icon-eva/common"
+require "icon-ionic/common"
 
 class ViewerIcon
   getter name : String
@@ -59,33 +64,23 @@ class ViewerIcon
 end
 
 module IconCatalog
-  macro add_icons(collection, shard, groups)
-    {% for group in groups %}
-      {% for line in read_file("#{__DIR__}/../lib/#{shard.id}/src/data/#{group.id}.tsv").lines %}
-        {% fields = line.strip.split("\t") %}
-        icons << ViewerIcon.new({{ collection }}, {{ fields[0] }}, {{ fields[1] }})
-      {% end %}
-    {% end %}
-  end
-
   def self.all : Array(ViewerIcon)
     icons = [] of ViewerIcon
-    add_icons("Radix", "icon-radix", ["icons"])
-    add_icons("Fluent", "icon-fluent", [
-      "10_filled", "10_regular", "12_filled", "12_regular",
-      "16_color", "16_filled", "16_regular",
-      "20_color", "20_filled", "20_regular",
-      "24_color", "24_filled", "24_light", "24_regular",
-      "28_color", "28_filled", "28_light", "28_regular",
-      "32_color", "32_filled", "32_light", "32_regular",
-      "48_color", "48_filled", "48_light", "48_regular",
-    ])
-    add_icons("Octicons", "icon-octicons", ["12", "16", "24", "48", "96"])
-    add_icons("Eva", "icon-eva", ["24_filled", "24_outline"])
-    add_icons("Ionic", "icon-ionic", [
-      "24_filled", "24_logos", "24_outline", "24_sharp",
-      "32_filled", "32_logos", "32_outline", "32_sharp",
-    ])
+    Icon::Radix.each_icon_data do |name, encoded|
+      icons << ViewerIcon.new("Radix", {{ name }}, {{ encoded }})
+    end
+    Icon::Fluent.each_icon_data do |name, encoded|
+      icons << ViewerIcon.new("Fluent", {{ name }}, {{ encoded }})
+    end
+    Icon::Octicons.each_icon_data do |name, encoded|
+      icons << ViewerIcon.new("Octicons", {{ name }}, {{ encoded }})
+    end
+    Icon::Eva.each_icon_data do |name, encoded|
+      icons << ViewerIcon.new("Eva", {{ name }}, {{ encoded }})
+    end
+    Icon::Ionic.each_icon_data do |name, encoded|
+      icons << ViewerIcon.new("Ionic", {{ name }}, {{ encoded }})
+    end
     icons
   end
 end
