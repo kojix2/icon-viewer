@@ -16,5 +16,8 @@ describe IconCatalog do
       icon.should_not be_nil
       icon.not_nil!.variant.should eq(variant)
     end
+    lockup = icons.find { |entry| entry.collection == "Octicons" && entry.name == "LockupGithub16" }.not_nil!
+    lockup.width.should eq(68)
+    lockup.height.should eq(16)
   end
 end

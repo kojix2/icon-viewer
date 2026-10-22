@@ -10,7 +10,16 @@ class ViewerIcon
   @encoded_png : String
   @native : UIng::Image?
 
-  def initialize(@collection : String, @name : String, @encoded_png : String, @width : Int32, @height : Int32)
+  def initialize(@collection : String, @name : String, @encoded_png : String)
+    header = Base64.decode(@encoded_png[0, 32])
+    unless header.size >= 24 && header[0, 8] == Bytes[137, 80, 78, 71, 13, 10, 26, 10]
+      raise "Invalid PNG for #{@collection}::#{@name}"
+    end
+    @width = (header[16].to_i << 24) | (header[17].to_i << 16) | (header[18].to_i << 8) | header[19].to_i
+    @height = (header[20].to_i << 24) | (header[21].to_i << 16) | (header[22].to_i << 8) | header[23].to_i
+    unless @width.in?(1..1024) && @height.in?(1..1024)
+      raise "Invalid PNG dimensions for #{@collection}::#{@name}: #{@width}x#{@height}"
+    end
     @variant = variant_for(@name)
   end
 
@@ -50,13 +59,33 @@ class ViewerIcon
 end
 
 module IconCatalog
+  macro add_icons(collection, shard, groups)
+    {% for group in groups %}
+      {% for line in read_file("#{__DIR__}/../lib/#{shard.id}/src/data/#{group.id}.tsv").lines %}
+        {% fields = line.strip.split("\t") %}
+        icons << ViewerIcon.new({{ collection }}, {{ fields[0] }}, {{ fields[1] }})
+      {% end %}
+    {% end %}
+  end
+
   def self.all : Array(ViewerIcon)
     icons = [] of ViewerIcon
-    {{ run("../scripts/png_catalog", "Radix", "icon-radix") }}
-    {{ run("../scripts/png_catalog", "Fluent", "icon-fluent") }}
-    {{ run("../scripts/png_catalog", "Octicons", "icon-octicons") }}
-    {{ run("../scripts/png_catalog", "Eva", "icon-eva") }}
-    {{ run("../scripts/png_catalog", "Ionic", "icon-ionic") }}
+    add_icons("Radix", "icon-radix", ["icons"])
+    add_icons("Fluent", "icon-fluent", [
+      "10_filled", "10_regular", "12_filled", "12_regular",
+      "16_color", "16_filled", "16_regular",
+      "20_color", "20_filled", "20_regular",
+      "24_color", "24_filled", "24_light", "24_regular",
+      "28_color", "28_filled", "28_light", "28_regular",
+      "32_color", "32_filled", "32_light", "32_regular",
+      "48_color", "48_filled", "48_light", "48_regular",
+    ])
+    add_icons("Octicons", "icon-octicons", ["12", "16", "24", "48", "96"])
+    add_icons("Eva", "icon-eva", ["24_filled", "24_outline"])
+    add_icons("Ionic", "icon-ionic", [
+      "24_filled", "24_logos", "24_outline", "24_sharp",
+      "32_filled", "32_logos", "32_outline", "32_sharp",
+    ])
     icons
   end
 end
