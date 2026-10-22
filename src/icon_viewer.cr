@@ -153,7 +153,14 @@ class IconViewer
     info = toolbar.append_button("Info", toolbar_images[4])
     info.tooltip = "About Icon Viewer"
     info.on_clicked do
-      @window.msg_box("About Icon Viewer", "Icon Viewer\nVersion #{VERSION}\n#{PROJECT_URL}")
+      icon_credits = [
+        "Radix Icons (MIT) — Copyright (c) 2022 WorkOS",
+        "Fluent UI System Icons (MIT) — Copyright (c) 2020 Microsoft Corporation",
+        "Octicons (MIT) — Copyright (c) 2026 GitHub Inc.",
+        "Eva Icons (MIT) — Copyright (c) 2018 Akveo.",
+        "Ionicons (MIT) — Copyright (c) 2015-present Ionic",
+      ].join("\n")
+      @window.msg_box("About Icon Viewer", "Icon Viewer\nVersion #{VERSION}\n#{PROJECT_URL}\n\nIcon artwork:\n#{icon_credits}\n\nFull license texts and Fluent notices are included with the icon shards.")
     end
 
     # UIng copies item images and frees the attached toolbar with its window.
