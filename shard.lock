@@ -1,0 +1,29 @@
+version: 2.0
+shards:
+  crimage:
+    git: https://github.com/naqvis/crimage.git
+    version: 1.0.5+git.commit.7d3244a3850646e3d398cef071f7c3e3f52c7518
+
+  icon-eva:
+    git: https://github.com/kojix2/icon-eva.git
+    version: 0.1.0+git.commit.78da3760ae402caf21f3194a2981e2c637ccb499
+
+  icon-fluent:
+    git: https://github.com/kojix2/icon-fluent.git
+    version: 0.1.0+git.commit.014e97926e7f8a4f252ed2c31c5e49a2d8da5715
+
+  icon-ionic:
+    git: https://github.com/kojix2/icon-ionic.git
+    version: 0.1.0+git.commit.6998e2101f7166686e9c6752313cab02b55048dd
+
+  icon-octicons:
+    git: https://github.com/kojix2/icon-octicons.git
+    version: 0.1.0+git.commit.046cec2c9023c149e220edf785b61cdcf63bfe10
+
+  icon-radix:
+    git: https://github.com/kojix2/icon-radix.git
+    version: 0.1.0+git.commit.fc743a49caf6cc600fd516e922474f7d93eefd2f
+
+  uing:
+    git: https://github.com/kojix2/uing.git
+    version: 0.6.0+git.commit.77ec8a317b9476586a61b9ad46d0a22e51343c5b

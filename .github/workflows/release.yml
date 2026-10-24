@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  screenshot:
+    needs: build
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu
+            runner: ubuntu-latest
+            app: icon-viewer
+          - os: windows
+            runner: windows-2025
+            app: icon-viewer.exe
+          - os: macos
+            runner: macos-latest
+            app: IconViewer.app/Contents/MacOS/icon-viewer
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: build-${{ matrix.os }}
+          path: ${{ runner.temp }}/app
+      - name: Install Linux screenshot tools
+        if: matrix.os == 'ubuntu'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev xvfb imagemagick openbox wmctrl
+      - name: Unpack Linux or macOS
+        if: matrix.os != 'windows'
+        shell: bash
+        run: |
+          if [ '${{ matrix.os }}' = macos ]; then
+            ditto -x -k "$RUNNER_TEMP/app/icon-viewer-macos-arm64.zip" .
+          else
+            tar -xzf "$RUNNER_TEMP/app/icon-viewer-linux-x64.tar.gz"
+          fi
+      - name: Unpack Windows
+        if: matrix.os == 'windows'
+        shell: pwsh
+        run: Expand-Archive "$env:RUNNER_TEMP/app/icon-viewer-windows-x64.zip" .
+      - name: Capture window
+        uses: kojix2/uing/.github/actions/screenshot@c12831dd06c3d86a973bab4c5a75af51cdb865a5
+        with:
+          os: ${{ matrix.os }}
+          app-names: ${{ matrix.app }}
+          output-files: icon-viewer-${{ matrix.os }}.png
+      - uses: actions/upload-artifact@v7
+        with:
+          name: screenshot-${{ matrix.os }}
+          path: icon-viewer-${{ matrix.os }}.png
+          if-no-files-found: error
+
+  publish:
+    needs: [build, screenshot]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check version
+        run: test "${GITHUB_REF_NAME#v}" = "$(shards version)"
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: screenshot-*
+          path: ${{ runner.temp }}/screenshots
+          merge-multiple: true
+      - name: Update screenshots branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git ls-remote --exit-code --heads origin screenshots > /dev/null; then
+            git fetch origin screenshots
+            git switch -C screenshots FETCH_HEAD
+          else
+            git switch --orphan screenshots
+            git rm -rfq .
+          fi
+          rm -f icon-viewer-*.png
+          cp "$RUNNER_TEMP"/screenshots/*.png .
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m 'Update release screenshots'
+            git push origin HEAD:screenshots
+          fi
+          git switch --detach "$GITHUB_SHA"
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: build-*
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: dist/*

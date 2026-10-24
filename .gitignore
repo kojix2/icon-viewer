@@ -3,4 +3,3 @@
 /.crystal/
 /.build/
 /bin/
-/shard.lock
