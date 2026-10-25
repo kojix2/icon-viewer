@@ -69,7 +69,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Check version
-        run: test "${GITHUB_REF_NAME#v}" = "$(shards version)"
+        run: |
+          version="$(yq -er '.version' shard.yml)"
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match shard.yml version $version"
+            exit 1
+          fi
       - uses: actions/download-artifact@v8
         with:
           pattern: screenshot-*
