@@ -20,7 +20,7 @@ jobs:
           - os: ubuntu
             runner: ubuntu-latest
           - os: windows
-            runner: windows-2025
+            runner: windows-latest
           - os: macos
             runner: macos-latest
     steps:
@@ -40,7 +40,7 @@ jobs:
       - name: Test
         run: crystal spec
       - name: Build
-        run: shards build --release --no-debug
+        run: shards build --release --no-debug ${{ matrix.os == 'windows' && '--static' || '' }}
 
       - name: Package Linux
         if: matrix.os == 'ubuntu'

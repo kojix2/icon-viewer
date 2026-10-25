@@ -22,7 +22,7 @@ jobs:
             runner: ubuntu-latest
             app: icon-viewer
           - os: windows
-            runner: windows-2025
+            runner: windows-latest
             app: icon-viewer.exe
           - os: macos
             runner: macos-latest
