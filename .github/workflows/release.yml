@@ -89,7 +89,6 @@ jobs:
             git switch -C screenshots FETCH_HEAD
           else
             git switch --orphan screenshots
-            git rm -rfq .
           fi
           rm -f icon-viewer-*.png
           cp "$RUNNER_TEMP"/screenshots/*.png .
