@@ -1,6 +1,7 @@
 require "./icon_catalog"
 require "./icon_search"
 require "./icon_variants"
+require "./icon_grid"
 
 # Table image values borrow ViewerIcon images. Release the final page only
 # after the native table has actually finished destruction.
@@ -16,8 +17,8 @@ private class ViewerTable < UIng::Table
 end
 
 class IconViewer
-  PAGE_SIZE = 256
-  VERSION = "0.1.0"
+  PAGE_SIZE   = 256
+  VERSION     = "0.1.0"
   PROJECT_URL = "https://github.com/kojix2/icon-viewer"
 
   @collections : Array(String)
@@ -33,8 +34,10 @@ class IconViewer
     @visible = [] of ViewerIcon
     @page_index = 0
     @current_index = -1
+    @preview_icon = nil.as(ViewerIcon?)
+    @updating_table = false
 
-    @window = UIng::Window.new("Icon Viewer", 700, 480, margined: true)
+    @window = UIng::Window.new("Icon Viewer", 1100, 640, margined: true)
     @collection = UIng::Combobox.new(@collections)
     @collection.selected = 0
     @collection.tooltip = "Choose an icon collection"
@@ -43,6 +46,14 @@ class IconViewer
     @variant.tooltip = "Choose a size and style"
     @search = UIng::Entry.new(:search)
     @search.tooltip = "Search icons by name"
+    @view = UIng::Combobox.new(["Grid", "List"])
+    @view.selected = 0
+    @view.tooltip = "Switch between a scrolling grid and the paged list"
+    @columns = UIng::Combobox.new(["4 columns", "6 columns", "8 columns", "10 columns"])
+    @columns.selected = 1
+    @columns.tooltip = "Choose how many icons appear in each row"
+    @grid = IconGrid.new
+    @grid_panel = UIng::Box.new(:vertical, padded: true)
     @preview = UIng::ImageView.new
     @preview.content_mode = UIng::ImageView::ContentMode::Fit
     @selected_name = UIng::Label.new("Select an icon")
@@ -93,6 +104,13 @@ class IconViewer
     search_row.append(@collection, false)
     search_row.append(@variant, false)
     search_row.append(@search, true)
+    search_row.append(@view, false)
+
+    grid_options = UIng::Box.new(:horizontal, padded: true)
+    grid_options.append(UIng::Label.new("Grid density"), false)
+    grid_options.append(@columns, false)
+    @grid_panel.append(grid_options, false)
+    @grid_panel.append(@grid, true)
 
     page_row = UIng::Box.new(:horizontal, padded: true)
     page_row.append(@previous_page, false)
@@ -101,6 +119,11 @@ class IconViewer
 
     @list_panel.append(@table, true)
     @list_panel.append(page_row, false)
+    @list_panel.hide
+
+    browser_panel = UIng::Box.new(:vertical)
+    browser_panel.append(@grid_panel, true)
+    browser_panel.append(@list_panel, true)
 
     detail_panel = UIng::Box.new(:vertical, padded: true)
     detail_panel.append(@preview, true)
@@ -108,10 +131,11 @@ class IconViewer
     detail_panel.append(UIng::Label.new("Crystal constant"), false)
     detail_panel.append(@constant, false)
     detail_panel.append(@dimensions, false)
+    @preview.set_minimum_size(300, 200)
 
     content = UIng::Box.new(:horizontal, padded: true)
-    content.append(@list_panel, true)
-    content.append(detail_panel, true)
+    content.append(browser_panel, true)
+    content.append(detail_panel, false)
 
     root.append(search_row, false)
     root.append(content, true)
@@ -173,10 +197,15 @@ class IconViewer
     @variant.on_selected { filter(@search.text || "") unless @updating_variants }
     @previous_page.on_clicked { show_page(@page_index - 1) }
     @next_page.on_clicked { show_page(@page_index + 1) }
+    @grid.on_selected { |index| jump_to_match(index) }
+    @view.on_selected { switch_view }
+    @columns.on_selected { |index| @grid.columns = 4 + index * 2 }
 
     @table.on_selection_changed do |selection|
-      if row = selection.rows.first?
-        show_icon(row) if row >= 0 && row < @visible.size
+      unless @updating_table
+        if row = selection.rows.first?
+          show_icon(@page_index * PAGE_SIZE + row) if row >= 0 && row < @visible.size
+        end
       end
     end
 
@@ -192,24 +221,27 @@ class IconViewer
   end
 
   private def show_icon(index : Int32) : Nil
-    return unless icon = @visible[index]?
+    return unless icon = @matches[index]?
+    previous_icon = @preview_icon
     @current_index = index
     @preview.image = icon.native
+    @preview_icon = icon
+    previous_icon.try { |previous| previous.free unless previous.same?(icon) || @visible.includes?(previous) }
     @selected_name.text = icon.name
     @constant.text = "Icon::#{icon.collection}::#{icon.name}"
     @dimensions.text = "#{icon.width} × #{icon.height} px"
-    @status.text = "#{@page_index * PAGE_SIZE + index + 1} / #{@matches.size} matches   •   #{collection_total} #{@collections[@collection.selected || 0]} icons"
+    @status.text = "#{index + 1} / #{@matches.size} matches   •   #{collection_total} #{@collections[@collection.selected || 0]} icons"
   end
 
   private def select_icon(index : Int32) : Nil
     return unless @visible[index]?
-    show_icon(index)
+    show_icon(@page_index * PAGE_SIZE + index)
     @table.selection = UIng::Table::Selection.new([index])
   end
 
   private def move(offset : Int32) : Nil
     return if @matches.empty?
-    index = (@page_index * PAGE_SIZE + @current_index + offset).clamp(0, @matches.size - 1)
+    index = (@current_index + offset).clamp(0, @matches.size - 1)
     jump_to_match(index)
   end
 
@@ -223,10 +255,26 @@ class IconViewer
         @matches << icon
       end
     end
-    show_page(0)
+    @grid.items = @matches
+    if grid_view?
+      clear_table
+      if @matches.empty?
+        clear_preview
+      else
+        jump_to_match(0)
+      end
+    else
+      show_page(0)
+    end
   end
 
   private def jump_to_match(index : Int32) : Nil
+    return unless @matches[index]?
+    if grid_view?
+      show_icon(index)
+      @grid.select_icon(index)
+      return
+    end
     page = index // PAGE_SIZE
     if page == @page_index
       select_icon(index % PAGE_SIZE)
@@ -240,7 +288,6 @@ class IconViewer
     next_page = page.clamp(0, {page_count - 1, 0}.max)
     start = next_page * PAGE_SIZE
     new_visible = @matches[start, PAGE_SIZE]
-    old_visible = @visible.dup
 
     # Decode before changing the GTK table. Its cell_value callback only
     # returns images that are already owned by the catalog.
@@ -249,36 +296,70 @@ class IconViewer
 
     # Keep the Table model and the Crystal backing array in sync, row by row.
     # Sending row_deleted/row_inserted is supported on all UIng platforms.
-    @table.selection = UIng::Table::Selection.new([] of Int32)
-    until @visible.empty?
-      @visible.pop
-      @model.row_deleted(@visible.size)
-    end
+    clear_table(new_visible)
 
-    selected_collection = @collections[@collection.selected || 0]
-    new_visible.each do |icon|
-      @visible << icon
-      @model.row_inserted(@visible.size - 1)
+    @updating_table = true
+    begin
+      new_visible.each do |icon|
+        @visible << icon
+        @model.row_inserted(@visible.size - 1)
+      end
+    ensure
+      @updating_table = false
     end
-
     @page_label.text = page_count == 0 ? "Page 0 / 0" : "Page #{@page_index + 1} / #{page_count}"
     @page_index > 0 ? @previous_page.enable : @previous_page.disable
     @page_index + 1 < page_count ? @next_page.enable : @next_page.disable
 
     if @visible.empty?
-      @current_index = -1
-      @preview.image = nil
-      @selected_name.text = "No matches"
-      @constant.text = ""
-      @dimensions.text = ""
-      @status.text = "0 matches   •   #{collection_total} #{selected_collection} icons"
+      clear_preview
     else
       select_icon(selected_row)
     end
+  end
 
-    # Row notifications are complete, and ImageView keeps its own copy.
-    # Images outside the current page are no longer borrowed by the table.
-    old_visible.each { |icon| icon.free unless @visible.includes?(icon) }
+  private def grid_view? : Bool
+    @view.selected == 0
+  end
+
+  private def switch_view : Nil
+    if grid_view?
+      @list_panel.hide
+      @grid_panel.show
+      @grid.select_icon(@current_index)
+    else
+      @grid_panel.hide
+      @list_panel.show
+      index = {@current_index, 0}.max
+      show_page(index // PAGE_SIZE, index % PAGE_SIZE)
+    end
+  end
+
+  private def clear_table(keep : Array(ViewerIcon) = [] of ViewerIcon) : Nil
+    old_visible = @visible.dup
+    @updating_table = true
+    begin
+      @table.selection = UIng::Table::Selection.new([] of Int32)
+      until @visible.empty?
+        @visible.pop
+        @model.row_deleted(@visible.size)
+      end
+    ensure
+      @updating_table = false
+    end
+    # Native row notifications are complete; ImageView owns its preview copy.
+    old_visible.each { |icon| icon.free unless keep.includes?(icon) }
+  end
+
+  private def clear_preview : Nil
+    @current_index = -1
+    @preview.image = nil
+    @preview_icon.try &.free
+    @preview_icon = nil
+    @selected_name.text = "No matches"
+    @constant.text = ""
+    @dimensions.text = ""
+    @status.text = "0 matches   •   #{collection_total} #{@collections[@collection.selected || 0]} icons"
   end
 
   private def update_variants : Nil

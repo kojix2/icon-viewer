@@ -2,7 +2,9 @@
 
 A native Crystal GUI for browsing [Radix](https://github.com/kojix2/icon-radix), [Fluent](https://github.com/kojix2/icon-fluent), [Octicons](https://github.com/kojix2/icon-octicons), [Eva](https://github.com/kojix2/icon-eva), and [Ionicons](https://github.com/kojix2/icon-ionic), built with [UIng](https://github.com/kojix2/uing).
 
-Choose a collection and size/style variant, search by name, then preview an icon and copy its Crystal constant. Results are paged in groups of 256. Icon PNGs are decoded when displayed.
+Choose a collection and size/style variant, search by name, then preview an icon and copy its Crystal constant. The default **Grid** view lets you scroll through all matching icons without changing pages. Click an icon to preview it, or navigate with the arrow keys, Home, and End. Use **Grid density** to choose 4, 6, 8, or 10 columns to suit your window size. Thumbnails are decoded on demand and kept in a bounded cache for large collections.
+
+Switch to **List** for the original name-and-icon table, paged in groups of 256. The selected icon is preserved when switching views. Search and collection/variant filters apply to both views.
 
 ## Screenshots
 

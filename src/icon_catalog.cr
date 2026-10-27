@@ -48,14 +48,17 @@ class ViewerIcon
     if image = @native
       return image
     end
+    @native = decode_native
+  end
+
+  # Returns an independently owned image for surfaces with their own cache.
+  def decode_native : UIng::Image
     source = CrImage.read(IO::Memory.new(Base64.decode(@encoded_png)))
     bounds = source.bounds
     unless bounds.width == @width && bounds.height == @height
       raise "#{@collection}::#{@name} decoded to #{bounds.width}x#{bounds.height}, expected #{@width}x#{@height}"
     end
-    native = UIng::Image.from_crimage(source)
-    @native = native
-    native
+    UIng::Image.from_crimage(source)
   end
 
   def cached_native : UIng::Image
