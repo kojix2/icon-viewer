@@ -60,4 +60,13 @@ describe IconGridLayout do
     expect_raises(ArgumentError) { IconGridLayout.new(1, 0) }
     expect_raises(ArgumentError) { IconGridLayout.new(-1) }
   end
+
+  it "starts keyboard navigation at the first icon when nothing is selected" do
+    layout = IconGridLayout.new(13, 6)
+    [:left, :right, :up, :down, :home].each do |direction|
+      layout.move(-1, direction).should eq(0)
+    end
+    layout.move(-1, :end).should eq(12)
+    layout.move(-1, :unknown).should be_nil
+  end
 end

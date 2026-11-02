@@ -23,26 +23,7 @@ class IconGrid < UIng::Area
         @on_selected.try &.call(index)
       end
     end
-    on_key_event do |event|
-      if event.up? || event.modifiers != UIng::Modifiers::None
-        false
-      else
-        direction = case event.ext_key
-                    when UIng::ExtKey::Left  then :left
-                    when UIng::ExtKey::Right then :right
-                    when UIng::ExtKey::Up    then :up
-                    when UIng::ExtKey::Down  then :down
-                    when UIng::ExtKey::Home  then :home
-                    when UIng::ExtKey::End   then :end
-                    end
-        if direction && (index = @layout.move(@selected, direction))
-          @on_selected.try &.call(index)
-          true
-        else
-          false
-        end
-      end
-    end
+    on_key_event { |event| handle_key_event(event) }
   end
 
   def on_selected(&block : Int32 -> Nil) : Nil
@@ -67,7 +48,7 @@ class IconGrid < UIng::Area
   end
 
   def select_icon(index : Int32, reveal : Bool = true) : Nil
-    return unless @items[index]?
+    return unless 0 <= index < @items.size
     @selected = index
     if reveal
       x, y = @layout.position(index)
@@ -80,6 +61,25 @@ class IconGrid < UIng::Area
     super
     release_images
     @on_selected = nil
+  end
+
+  private def handle_key_event(event : UIng::Area::KeyEvent) : Bool
+    return false if event.up? || event.modifiers != UIng::Modifiers::None
+
+    direction = case event.ext_key
+                when UIng::ExtKey::Left  then :left
+                when UIng::ExtKey::Right then :right
+                when UIng::ExtKey::Up    then :up
+                when UIng::ExtKey::Down  then :down
+                when UIng::ExtKey::Home  then :home
+                when UIng::ExtKey::End   then :end
+                end
+    if direction && (index = @layout.move(@selected, direction))
+      @on_selected.try &.call(index)
+      true
+    else
+      false
+    end
   end
 
   private def release_images : Nil

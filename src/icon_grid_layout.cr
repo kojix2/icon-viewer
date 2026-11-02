@@ -25,10 +25,10 @@ struct IconGridLayout
   end
 
   def index_at(x : Float64, y : Float64) : Int32?
-    return nil if x < PADDING || y < PADDING
+    return if x < PADDING || y < PADDING
     col = ((x - PADDING) / CELL_WIDTH).floor.to_i
     row = ((y - PADDING) / CELL_HEIGHT).floor.to_i
-    return nil if col >= @columns
+    return if col >= @columns
     index = row * @columns + col
     index < @count ? index : nil
   end
@@ -41,7 +41,7 @@ struct IconGridLayout
   end
 
   def move(index : Int32, direction : Symbol) : Int32?
-    return nil if @count == 0
+    return if @count == 0
     target = case direction
              when :left  then index - 1
              when :right then index + 1
@@ -49,8 +49,11 @@ struct IconGridLayout
              when :down  then index + @columns
              when :home  then 0
              when :end   then @count - 1
-             else             return nil
+             else             return
              end
+    # A missing selection must not be treated as the end of an Array or as
+    # a position one cell before the first row.
+    return direction == :end ? @count - 1 : 0 unless 0 <= index < @count
     target.clamp(0, @count - 1)
   end
 end
